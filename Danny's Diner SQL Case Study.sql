@@ -1,0 +1,85 @@
+-- 1. What is the total amount each customer spent at the restaurant?
+SELECT CUSTOMER_ID,
+	SUM(PRICE) AS TOTAL_SPENT
+FROM SALES
+JOIN MENU ON SALES.PRODUCT_ID = MENU.PRODUCT_ID
+GROUP BY CUSTOMER_ID
+ORDER BY TOTAL_SPENT DESC
+
+-- 2. How many days has each customer visited the restaurant?
+SELECT CUSTOMER_ID,
+	AVG(EXTRACT(DAY FROM ORDER_DATE)) AS AVG_VISITED
+FROM SALES
+GROUP BY CUSTOMER_ID
+
+
+-- 3. What was the first item from the menu purchased by each customer?
+SELECT CUSTOMER_ID,
+	MIN(S.PRODUCT_ID) AS PRODUCT_ID,
+	MIN(S.ORDER_DATE) AS FIRST_PURCHASED_DATE
+FROM MENU M
+JOIN SALES S ON M.PRODUCT_ID = S.PRODUCT_ID
+GROUP BY CUSTOMER_ID
+ORDER BY CUSTOMER_ID
+
+
+-- 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
+SELECT CUSTOMER_ID,
+	MAX(M.PRODUCT_NAME) AS PRODUCT_NAME,
+	COUNT(S.PRODUCT_ID) AS MAX_PURCHASED
+FROM SALES S
+JOIN MENU M ON S.PRODUCT_ID = M.PRODUCT_ID
+GROUP BY CUSTOMER_ID,
+	PRODUCT_NAME
+ORDER BY MAX_PURCHASED DESC
+
+
+
+
+-- 5. Which item was the most popular for each customer?
+SELECT CUSTOMER_ID,
+	PRODUCT_NAME,
+	COUNT(S.PRODUCT_ID) AS MAX_PURCHASED
+FROM SALES S
+JOIN MENU M ON S.PRODUCT_ID = M.PRODUCT_ID
+GROUP BY CUSTOMER_ID,
+	PRODUCT_NAME
+ORDER BY MAX_PURCHASED DESC
+
+
+
+
+-- 6. Which item was purchased first by the customer after they became a member?
+SELECT DISTINCT *
+FROM MEMBERS M
+JOIN SALES S ON M.CUSTOMER_ID = S.CUSTOMER_ID
+JOIN MENU M1 ON S.PRODUCT_ID = M1.PRODUCT_ID
+WHERE JOIN_DATE < ORDER_DATE
+
+-- 7. Which item was purchased just before the customer became a member?
+SELECT DISTINCT *
+FROM MEMBERS M
+JOIN SALES S ON M.CUSTOMER_ID = S.CUSTOMER_ID
+JOIN MENU M1 ON S.PRODUCT_ID = M1.PRODUCT_ID
+WHERE JOIN_DATE > ORDER_DATE
+
+
+-- 8. What is the total items and amount spent for each member before they became a member?
+SELECT PRODUCT_NAME,
+	S.CUSTOMER_ID,
+	SUM(PRICE)
+FROM MEMBERS M
+JOIN SALES S ON M.CUSTOMER_ID = S.CUSTOMER_ID
+JOIN MENU M1 ON S.PRODUCT_ID = M1.PRODUCT_ID
+WHERE JOIN_DATE > ORDER_DATE
+GROUP BY S.CUSTOMER_ID,
+	PRODUCT_NAME
+
+
+-- 9.  If each $1 spent equates to 10 points and sushi has a 2x points multiplier 
+-- how many points would each customer have?
+SELECT S.CUSTOMER_ID,
+	SUM(CASE WHEN M.PRODUCT_NAME = 'sushi' THEN M.PRICE * 10 * 2 ELSE M.PRICE * 10 END) AS TOTAL_POINTS
+FROM SALES S
+JOIN MENU M ON S.PRODUCT_ID = M.PRODUCT_ID
+GROUP BY S.CUSTOMER_ID
